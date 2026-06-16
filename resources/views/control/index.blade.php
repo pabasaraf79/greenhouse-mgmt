@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Control Panel')
-@section('subtitle', 'Manual overrides & automation · last synced just now')
+@section('subtitle', 'Manual overrides & automation')
 
 @section('content')
     {{-- Offline banner --}}
@@ -78,7 +78,7 @@
             <span class="stat-icon tone-green">@include('partials.icon', ['name' => 'gauge', 'size' => 20])</span>
             <div class="flex-fill">
                 <div class="fw-bold">Rule Engine: Active</div>
-                <div style="font-size:.85rem;">{{ collect($rules)->where('enabled', true)->count() }} of {{ count($rules) }} rules enabled · evaluated just now</div>
+                <div style="font-size:.85rem;">{{ collect($rules)->where('enabled', true)->count() }} of {{ count($rules) }} rules enabled · evaluated on each reading</div>
             </div>
             <span class="badge-status badge-normal"><span class="dot"></span>Healthy</span>
         </div>
@@ -97,9 +97,16 @@
                                     <span class="{{ $rule['enabled'] ? '' : 'text-muted-2' }} fw-semibold" style="font-size:.85rem; {{ $rule['enabled'] ? 'color:var(--status-normal);' : '' }}">
                                         {{ $rule['enabled'] ? 'Enabled' : 'Disabled' }}
                                     </span>
-                                    <div class="form-check form-switch m-0">
-                                        <input class="form-check-input" type="checkbox" {{ $rule['enabled'] ? 'checked' : '' }} disabled>
-                                    </div>
+                                    @if (!empty($rule['key']))
+                                        <form method="POST" action="{{ route('control.rule-toggle', $rule['key']) }}" class="m-0">
+                                            @csrf
+                                            <div class="form-check form-switch m-0">
+                                                <input class="form-check-input" type="checkbox" {{ $rule['enabled'] ? 'checked' : '' }} onchange="this.form.submit()">
+                                            </div>
+                                        </form>
+                                    @else
+                                        <a href="{{ route('schedules.index') }}" class="text-muted-2" style="font-size:.72rem; white-space:nowrap;" title="Managed on the Schedules page">in Schedules ›</a>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

@@ -29,9 +29,9 @@ class AutomationEngine
     public static function rules(): array
     {
         return [
-            ['name' => 'Low Moisture',   'parameter' => 'soil_moisture',  'comparator' => 'below', 'actuator' => 'pump',   'default' => 30, 'condition' => 'Soil moisture < 30%', 'action' => 'Irrigation Pump → ON'],
-            ['name' => 'High Temp Vent', 'parameter' => 'temperature',    'comparator' => 'above', 'actuator' => 'fan',    'default' => 35, 'condition' => 'Temperature > 35 °C', 'action' => 'Ventilation Fan → ON'],
-            ['name' => 'Low Water',      'parameter' => 'water_level_cm', 'comparator' => 'below', 'actuator' => 'valve1', 'default' => 25, 'condition' => 'Water level < 25 cm', 'action' => 'Fill Valve → OPEN'],
+            ['key' => 'low_moisture',   'name' => 'Low Moisture',   'parameter' => 'soil_moisture',  'comparator' => 'below', 'actuator' => 'pump',   'default' => 30, 'condition' => 'Soil moisture < 30%', 'action' => 'Irrigation Pump → ON'],
+            ['key' => 'high_temp_vent', 'name' => 'High Temp Vent', 'parameter' => 'temperature',    'comparator' => 'above', 'actuator' => 'fan',    'default' => 35, 'condition' => 'Temperature > 35 °C', 'action' => 'Ventilation Fan → ON'],
+            ['key' => 'low_water',      'name' => 'Low Water',      'parameter' => 'water_level_cm', 'comparator' => 'below', 'actuator' => 'valve1', 'default' => 25, 'condition' => 'Water level < 25 cm', 'action' => 'Fill Valve → OPEN'],
         ];
     }
 
@@ -48,9 +48,15 @@ class AutomationEngine
         }
 
         $thresholds = $greenhouse->thresholds()->get()->keyBy('parameter');
+        $ruleStates = \App\Models\AutomationRule::states();
         $actions = 0;
 
         foreach (self::rules() as $rule) {
+            // Skip rules an operator has disabled (default enabled if no row yet).
+            if (($ruleStates[$rule['key']] ?? true) === false) {
+                continue;
+            }
+
             $value = $reading->{$rule['parameter']};
             if ($value === null) {
                 continue;

@@ -14,11 +14,21 @@ class ScheduleController extends Controller
             ? Greenhouse::find($request->input('greenhouse'))
             : Greenhouse::orderBy('name')->first();
 
-        $schedules = $currentGreenhouse
+        $all = $currentGreenhouse
             ? $currentGreenhouse->fertigationSchedules()->orderBy('start_time')->get()
             : collect();
 
-        return view('schedules.index', compact('currentGreenhouse', 'schedules'));
+        // Tab split: schedules that dose fertiliser vs pure irrigation cycles.
+        $tab = $request->input('tab') === 'irrigation' ? 'irrigation' : 'fertigation';
+        $counts = [
+            'fertigation' => $all->where('dose_seconds', '>', 0)->count(),
+            'irrigation' => $all->where('dose_seconds', '=', 0)->count(),
+        ];
+        $schedules = $tab === 'irrigation'
+            ? $all->where('dose_seconds', '=', 0)->values()
+            : $all->where('dose_seconds', '>', 0)->values();
+
+        return view('schedules.index', compact('currentGreenhouse', 'schedules', 'tab', 'counts'));
     }
 
     public function create()

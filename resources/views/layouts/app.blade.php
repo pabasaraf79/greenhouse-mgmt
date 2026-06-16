@@ -67,9 +67,12 @@
         <header class="page-header">
             <div>
                 <h1 class="page-title">@yield('title', 'Dashboard')</h1>
-                <div class="page-subtitle">@yield('subtitle', 'Live overview · last synced just now')</div>
+                <div class="page-subtitle">@yield('subtitle', 'Live overview')</div>
             </div>
             <div class="header-tools">
+                @if (!empty($lastSyncedAt))
+                    <span class="text-muted-2" style="font-size:.8rem; white-space:nowrap;">Synced {{ $lastSyncedAt->diffForHumans() }}</span>
+                @endif
                 <div class="dropdown">
                     <button class="gh-selector dropdown-toggle" data-bs-toggle="dropdown" type="button">
                         @include('partials.icon', ['name' => 'home', 'size' => 15])
@@ -82,9 +85,23 @@
                         @endforeach
                     </ul>
                 </div>
-                <span class="status-online-pill">
-                    <span class="status-dot online"></span> Systems Online
-                </span>
+                @php
+                    $allLive = $systemDeviceTotal > 0 && $systemDeviceLive === $systemDeviceTotal;
+                    $offlineCount = $systemDeviceTotal - $systemDeviceLive;
+                @endphp
+                @if ($systemDeviceTotal === 0)
+                    <span class="status-online-pill" style="background:#f3f4f6; color:var(--text-muted);">
+                        <span class="status-dot unknown"></span> No devices
+                    </span>
+                @elseif ($allLive)
+                    <span class="status-online-pill">
+                        <span class="status-dot online"></span> Systems Online
+                    </span>
+                @else
+                    <span class="status-online-pill" style="background:#fef3c7; color:#b45309;">
+                        <span class="status-dot offline"></span> {{ $offlineCount }} of {{ $systemDeviceTotal }} offline
+                    </span>
+                @endif
                 <a href="{{ route('alerts.index') }}" class="icon-btn">
                     @include('partials.icon', ['name' => 'bell', 'size' => 18])
                     @if ($sidebarAlertCount > 0)<span class="dot-count">{{ $sidebarAlertCount }}</span>@endif

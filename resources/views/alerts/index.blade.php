@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Alerts')
-@section('subtitle', $counts['active'].' active events · last synced just now')
+@section('subtitle', $counts['active'].' active event' . ($counts['active'] === 1 ? '' : 's'))
 
 @section('content')
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
@@ -50,7 +50,7 @@
                             <td class="text-muted-2">{{ $alert->device->name ?? '—' }}</td>
                             <td class="text-capitalize">{{ str_replace('_', ' ', $alert->parameter) }}</td>
                             <td class="fw-semibold mono">{{ $alert->value }}</td>
-                            <td class="text-muted-2 mono">—</td>
+                            <td class="text-muted-2 mono">{{ $thresholdDisplays[$alert->id] ?? '—' }}</td>
                             <td>{{ $alert->message }}</td>
                             <td class="text-muted-2">{{ $alert->created_at->diffForHumans() }}</td>
                             <td>@include('partials.badge', ['status' => $alert->status])</td>

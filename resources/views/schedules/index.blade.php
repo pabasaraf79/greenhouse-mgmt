@@ -10,7 +10,12 @@
 
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div class="filter-tabs">
-            <span class="filter-tab active">@include('partials.icon', ['name' => 'flask', 'size' => 15]) Fertigation Schedules</span>
+            <a class="filter-tab {{ $tab === 'fertigation' ? 'active' : '' }}" href="{{ request()->fullUrlWithQuery(['tab' => 'fertigation']) }}">
+                @include('partials.icon', ['name' => 'flask', 'size' => 15]) Fertigation Schedules <span class="count">{{ $counts['fertigation'] }}</span>
+            </a>
+            <a class="filter-tab {{ $tab === 'irrigation' ? 'active' : '' }}" href="{{ request()->fullUrlWithQuery(['tab' => 'irrigation']) }}">
+                @include('partials.icon', ['name' => 'droplet', 'size' => 15]) Irrigation Cycles <span class="count">{{ $counts['irrigation'] }}</span>
+            </a>
         </div>
         <a href="{{ route('schedules.create') }}" class="btn btn-accent">
             @include('partials.icon', ['name' => 'plus', 'size' => 16]) Add Schedule

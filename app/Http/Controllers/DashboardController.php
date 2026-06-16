@@ -29,7 +29,14 @@ class DashboardController extends Controller
             ? $currentGreenhouse->thresholds()->get()->keyBy('parameter')
             : collect();
 
-        // Build the four headline stat cards.
+        // 24h readings (used for charts AND trend deltas).
+        $since = now()->subDay();
+        $readings = SensorReading::whereIn('device_id', $deviceIds)
+            ->where('recorded_at', '>=', $since)
+            ->orderBy('recorded_at')
+            ->get(['temperature', 'humidity', 'soil_moisture', 'water_level_cm', 'recorded_at']);
+
+        // Build the four headline stat cards (with a real 24h trend delta).
         $metrics = [];
         $cards = [
             ['key' => 'temperature',    'label' => 'Temperature',  'unit' => '°C', 'icon' => 'thermometer', 'tone' => 'tone-temp'],
@@ -39,18 +46,19 @@ class DashboardController extends Controller
         ];
         foreach ($cards as $card) {
             $value = $latestReading?->{$card['key']};
+
+            // Trend = latest value vs the earliest reading in the 24h window.
+            $earliest = $readings->first()?->{$card['key']};
+            $trendDelta = ($value !== null && $earliest !== null)
+                ? round($value - $earliest, 1)
+                : null;
+
             $metrics[] = array_merge($card, [
                 'value' => $value,
                 'status' => ThresholdEvaluator::status($value, $thresholds->get($card['key'])),
+                'trend_delta' => $trendDelta,
             ]);
         }
-
-        // 24h chart data grouped by hour (avg per metric).
-        $since = now()->subDay();
-        $readings = SensorReading::whereIn('device_id', $deviceIds)
-            ->where('recorded_at', '>=', $since)
-            ->orderBy('recorded_at')
-            ->get(['temperature', 'humidity', 'soil_moisture', 'water_level_cm', 'recorded_at']);
 
         $byHour = $readings->groupBy(fn ($r) => $r->recorded_at->format('H:00'));
         $labels = $byHour->keys()->values();

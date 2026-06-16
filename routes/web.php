@@ -42,6 +42,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/control', [ControlController::class, 'index'])->name('control.index');
     Route::post('/control/toggle', [ControlController::class, 'toggle'])->name('control.toggle');
+    Route::post('/control/rules/{key}/toggle', [ControlController::class, 'toggleRule'])->name('control.rule-toggle');
 
     Route::resource('schedules', ScheduleController::class)->except(['show']);
     Route::post('schedules/{schedule}/run-now', [ScheduleController::class, 'runNow'])->name('schedules.run-now');

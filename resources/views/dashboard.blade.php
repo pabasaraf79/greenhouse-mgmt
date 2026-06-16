@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Dashboard')
-@section('subtitle', 'Live overview · last synced just now')
+@section('subtitle', 'Live overview · ' . ($latestReading ? 'last reading ' . $latestReading->recorded_at->diffForHumans() : 'no readings yet'))
 
 @section('content')
     {{-- ROW 1 — Stat cards --}}
@@ -11,7 +11,12 @@
                 <div class="gh-card stat-card h-100">
                     <div class="d-flex justify-content-between align-items-start">
                         <span class="stat-icon {{ $m['tone'] }}">@include('partials.icon', ['name' => $m['icon'], 'size' => 22])</span>
-                        @php $trend = $loop->index % 2 === 0 ? 'up' : 'down'; @endphp
+                        @if ($m['trend_delta'] !== null && $m['trend_delta'] != 0)
+                            @php $up = $m['trend_delta'] > 0; @endphp
+                            <span class="{{ $up ? 'trend-up' : 'trend-down' }}">
+                                {{ $up ? '▲' : '▼' }} {{ $up ? '+' : '' }}{{ rtrim(rtrim(number_format($m['trend_delta'], 1), '0'), '.') }}{{ $m['unit'] === '°C' ? '°' : $m['unit'] }}
+                            </span>
+                        @endif
                     </div>
                     <div class="stat-name mt-3">{{ $m['label'] }}</div>
                     <div class="stat-value my-1">

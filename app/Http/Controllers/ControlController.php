@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ActuatorCommand;
+use App\Models\AutomationRule;
 use App\Models\Device;
 use App\Models\Greenhouse;
 use App\Services\AutomationEngine;
@@ -53,11 +54,17 @@ class ControlController extends Controller
             ->where('status', 'offline')->get();
 
         // Automation rules — sourced from the real engine so the panel reflects
-        // exactly what runs on each reading. The fertigation row is schedule-driven.
+        // exactly what runs on each reading. Enabled state is persisted per rule.
+        $ruleStates = AutomationRule::states();
         $rules = AutomationEngine::rules();
-        $rules[] = ['name' => 'Fertigation', 'condition' => 'On schedule', 'action' => 'Fert Pump → ON', 'actuator' => 'fertiliser_pump'];
         foreach ($rules as &$rule) {
-            $rule['enabled'] = true;
+            $rule['enabled'] = $ruleStates[$rule['key']] ?? true;
+        }
+        unset($rule);
+        // Fertigation is schedule-driven (managed on the Schedules page), no engine key.
+        $rules[] = ['key' => null, 'name' => 'Fertigation', 'condition' => 'On schedule', 'action' => 'Fert Pump → ON', 'actuator' => 'fertiliser_pump', 'enabled' => true];
+
+        foreach ($rules as &$rule) {
             $last = ActuatorCommand::whereIn('device_id', $deviceIds)
                 ->where('actuator', $rule['actuator'])->latest('id')->first();
             $rule['last_triggered'] = $last?->created_at;
@@ -109,5 +116,19 @@ class ControlController extends Controller
                 ? 'Command sent to device.'
                 : 'Device offline — command queued and will apply on next sync.',
         ]);
+    }
+
+    /**
+     * Enable/disable an automation rule. The engine reads this on each reading.
+     */
+    public function toggleRule(string $key)
+    {
+        $validKeys = array_column(AutomationEngine::rules(), 'key');
+        abort_unless(in_array($key, $validKeys, true), 404);
+
+        $rule = AutomationRule::firstOrCreate(['rule_key' => $key], ['enabled' => true]);
+        $rule->update(['enabled' => ! $rule->enabled]);
+
+        return back()->with('status', "Rule \"{$key}\" ".($rule->enabled ? 'enabled' : 'disabled').'.');
     }
 }

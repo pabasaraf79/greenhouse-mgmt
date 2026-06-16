@@ -47,7 +47,51 @@ class AlertController extends Controller
 
         $alerts = $query->latest('created_at')->paginate(15)->withQueryString();
 
-        return view('alerts.index', compact('alerts', 'counts', 'filter', 'currentGreenhouse'));
+        // Compute the breached-threshold display ("< 20%", "> 35 °C") for each alert.
+        $thresholds = \App\Models\Threshold::whereIn('greenhouse_id', $alerts->pluck('greenhouse_id')->unique())
+            ->get()
+            ->keyBy(fn ($t) => $t->greenhouse_id.':'.$t->parameter);
+
+        $thresholdDisplays = [];
+        foreach ($alerts as $alert) {
+            $thresholdDisplays[$alert->id] = $this->thresholdDisplay($alert, $thresholds);
+        }
+
+        return view('alerts.index', compact('alerts', 'counts', 'filter', 'currentGreenhouse', 'thresholdDisplays'));
+    }
+
+    /**
+     * Build a "< 20%" / "> 35 °C" style label for the threshold an alert breached.
+     */
+    private function thresholdDisplay(Alert $alert, $thresholds): string
+    {
+        $t = $thresholds->get($alert->greenhouse_id.':'.$alert->parameter);
+        if (! $t) {
+            return '—';
+        }
+
+        $unit = $t->unit ? ' '.$t->unit : '';
+        $num = preg_match('/-?\d+(\.\d+)?/', (string) $alert->value, $m) ? (float) $m[0] : null;
+
+        // Pick min/max bound by severity.
+        $min = $alert->severity === 'critical' ? $t->critical_min : $t->warning_min;
+        $max = $alert->severity === 'critical' ? $t->critical_max : $t->warning_max;
+
+        // Decide direction from the value when possible, else from whichever bound exists.
+        if ($num !== null && $min !== null && $num < $min) {
+            return "< {$min}{$unit}";
+        }
+        if ($num !== null && $max !== null && $num > $max) {
+            return "> {$max}{$unit}";
+        }
+        if ($min !== null) {
+            return "< {$min}{$unit}";
+        }
+        if ($max !== null) {
+            return "> {$max}{$unit}";
+        }
+
+        return '—';
     }
 
     public function acknowledge(Alert $alert)
