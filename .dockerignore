@@ -1,0 +1,13 @@
+.git
+.env
+.env.backup
+.env.production
+node_modules
+vendor
+public/build
+public/hot
+.phpunit.cache
+.phpunit.result.cache
+docker-compose.yml
+Dockerfile
+.dockerignore

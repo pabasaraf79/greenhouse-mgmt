@@ -154,6 +154,34 @@ Two automation features need a word of setup:
 | `Address already in use` :8000 | `pkill -f "artisan serve"` or use `--port=8001` |
 | Want a clean dataset | `php artisan migrate:fresh --seed` |
 
+## 1.8 Run it with Docker instead (no local PHP/Node/MySQL needed)
+
+Skips 1.1–1.6 entirely — just Docker + Docker Compose on any machine.
+
+```bash
+cd greenhouse-mgmt
+cp .env.example .env             # first time only
+docker compose up -d --build     # builds the app image, starts app + db + scheduler
+```
+
+- App: **http://localhost:8080** (also reachable from other LAN devices, incl. ESP32
+  nodes, at `http://<this-machine's-LAN-IP>:8080`).
+- Three containers: `app` (Apache+PHP, runs migrations on boot), `db` (MySQL 8.4),
+  `scheduler` (runs `php artisan schedule:work` — this **replaces** the manual
+  scheduler step from 1.6; fertigation schedules fire automatically).
+- The `db` container uses its **own** credentials, independent of any MySQL you run
+  natively on the host (1.2): database `greenhouse_db`, user `greenhouse` /
+  `greenhouse_secret`, exposed on host port **3307** (not 3306, so it won't clash with
+  a native MySQL install). These are set in `docker-compose.yml` — change them there
+  if you need different values.
+- APP_KEY is generated automatically on first boot and saved back into your `.env`.
+- Fresh demo data (seeded logins, sample devices/readings — see 1.3):
+  ```bash
+  docker compose exec app php artisan migrate:fresh --seed
+  ```
+- Logs: `docker compose logs -f app` (or `scheduler`, `db`).
+- Stop: `docker compose down` (add `-v` to also wipe the database volume).
+
 ---
 
 # Part 2 — Firmware & how the ESP32 connects
