@@ -20,6 +20,9 @@ class Device extends Model
         'status',
         'last_seen_at',
         'firmware_version',
+        'wifi_ssid',
+        'wifi_password',
+        'server_url',
     ];
 
     protected $casts = [

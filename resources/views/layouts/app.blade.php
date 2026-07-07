@@ -15,14 +15,15 @@
     $initials = collect(explode(' ', $user->name ?? 'U'))->map(fn ($p) => mb_substr($p, 0, 1))->take(2)->implode('');
     $navItems = [
         ['route' => 'dashboard',        'pattern' => 'dashboard',     'label' => 'Dashboard',     'icon' => 'grid'],
-        ['route' => 'greenhouses.index','pattern' => 'greenhouses.*',  'label' => 'Greenhouses',   'icon' => 'home'],
-        ['route' => 'devices.index',    'pattern' => 'devices.*',      'label' => 'Devices',       'icon' => 'cpu'],
-        ['route' => 'thresholds.index', 'pattern' => 'thresholds.*',   'label' => 'Thresholds',    'icon' => 'sliders'],
+        ['route' => 'greenhouses.index','pattern' => 'greenhouses.*',  'label' => 'Greenhouses',   'icon' => 'home',   'admin_only' => true],
+        ['route' => 'devices.index',    'pattern' => 'devices.*',      'label' => 'Devices',       'icon' => 'cpu',    'admin_only' => true],
+        ['route' => 'thresholds.index', 'pattern' => 'thresholds.*',   'label' => 'Thresholds',    'icon' => 'sliders', 'admin_only' => true],
         ['route' => 'alerts.index',     'pattern' => 'alerts.*',       'label' => 'Alerts',        'icon' => 'bell', 'badge' => $sidebarAlertCount],
         ['route' => 'control.index',    'pattern' => 'control.*',      'label' => 'Control Panel', 'icon' => 'gauge'],
-        ['route' => 'schedules.index',  'pattern' => 'schedules.*',    'label' => 'Schedules',     'icon' => 'calendar'],
-        ['route' => 'reports.index',    'pattern' => 'reports.*',      'label' => 'Reports',       'icon' => 'chart'],
+        ['route' => 'schedules.index',  'pattern' => 'schedules.*',    'label' => 'Schedules',     'icon' => 'calendar', 'admin_only' => true],
+        ['route' => 'reports.index',    'pattern' => 'reports.*',      'label' => 'Reports',       'icon' => 'chart',   'admin_only' => true],
     ];
+    $navItems = array_values(array_filter($navItems, fn ($item) => empty($item['admin_only']) || $user->isAdmin()));
 @endphp
 <div class="app-shell">
     {{-- ============ SIDEBAR ============ --}}

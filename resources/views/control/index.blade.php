@@ -12,7 +12,9 @@
                 <div class="fw-bold">{{ $offlineDevices->count() }} device{{ $offlineDevices->count() > 1 ? 's' : '' }} offline</div>
                 <div style="font-size:.85rem;">{{ $offlineDevices->pluck('name')->join(', ') }} — automation rules depending on them are paused.</div>
             </div>
-            <a href="{{ route('devices.index') }}" class="btn btn-soft btn-sm">Inspect</a>
+            @if (auth()->user()->isAdmin())
+                <a href="{{ route('devices.index') }}" class="btn btn-soft btn-sm">Inspect</a>
+            @endif
         </div>
     @endif
 
@@ -43,6 +45,8 @@
                     <div class="mt-1 actuator-state">
                         @if ($a['is_on'])
                             <span class="badge-status badge-normal"><span class="dot"></span>{{ $a['on_state'] }}</span>
+                        @elseif ($a['is_pending'])
+                            <span class="badge-status badge-warning"><span class="dot"></span>Queued — device offline</span>
                         @else
                             <span class="badge-status badge-neutral"><span class="dot"></span>{{ $a['off_state'] }}</span>
                         @endif
@@ -104,8 +108,10 @@
                                                 <input class="form-check-input" type="checkbox" {{ $rule['enabled'] ? 'checked' : '' }} onchange="this.form.submit()">
                                             </div>
                                         </form>
-                                    @else
+                                    @elseif (auth()->user()->isAdmin())
                                         <a href="{{ route('schedules.index') }}" class="text-muted-2" style="font-size:.72rem; white-space:nowrap;" title="Managed on the Schedules page">in Schedules ›</a>
+                                    @else
+                                        <span class="text-muted-2" style="font-size:.72rem; white-space:nowrap;">on schedule</span>
                                     @endif
                                 </div>
                             </td>

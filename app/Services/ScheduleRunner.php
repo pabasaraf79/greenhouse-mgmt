@@ -7,8 +7,11 @@ use Carbon\Carbon;
 
 /**
  * Executes a fertigation schedule for real: issues the irrigation-pump and
- * fertiliser-pump commands (with durations so the device auto-stops), stamps
+ * dosing-valve commands (with durations so the device auto-stops), stamps
  * last_run_at, and recomputes next_run_at.
+ *
+ * Dosing drives valve2 — the real hardware has no dedicated fertiliser pump
+ * relay, so valve2 doubles as the dosing valve (see ControlController).
  */
 class ScheduleRunner
 {
@@ -32,7 +35,7 @@ class ScheduleRunner
                 $this->issuer->issue($device, 'pump', 'on', $schedule->duration_seconds, 'schedule', $userId);
             }
             if ($schedule->dose_seconds > 0) {
-                $this->issuer->issue($device, 'fertiliser_pump', 'on', $schedule->dose_seconds, 'schedule', $userId);
+                $this->issuer->issue($device, 'valve2', 'on', $schedule->dose_seconds, 'schedule', $userId);
             }
         }
 

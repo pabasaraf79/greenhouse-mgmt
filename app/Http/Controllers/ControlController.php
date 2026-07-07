@@ -13,13 +13,15 @@ use Illuminate\Http\Request;
 class ControlController extends Controller
 {
     /**
-     * The four controllable relays shown on the panel.
+     * The four controllable relays shown on the panel — matches the physical
+     * 4-relay board wired in firmware/greenhouse_node/greenhouse_node.ino.
+     * valve2 doubles as the fertigation dosing valve (see ScheduleRunner).
      */
     private const ACTUATORS = [
-        'pump'            => ['label' => 'Irrigation Pump',  'icon' => 'droplet', 'on_state' => 'Running', 'off_state' => 'Off'],
-        'fan'             => ['label' => 'Ventilation Fan',  'icon' => 'fan',     'on_state' => 'Running', 'off_state' => 'Off'],
-        'valve1'          => ['label' => 'Valve 1 — Zone A', 'icon' => 'valve',   'on_state' => 'Open',    'off_state' => 'Closed'],
-        'fertiliser_pump' => ['label' => 'Fertiliser Pump', 'icon' => 'flask',   'on_state' => 'Dosing',  'off_state' => 'Off'],
+        'pump'   => ['label' => 'Irrigation Pump',        'icon' => 'droplet', 'on_state' => 'Running', 'off_state' => 'Off'],
+        'fan'    => ['label' => 'Ventilation Fan',        'icon' => 'fan',     'on_state' => 'Running', 'off_state' => 'Off'],
+        'valve1' => ['label' => 'Valve 1 — Zone A',       'icon' => 'valve',   'on_state' => 'Open',    'off_state' => 'Closed'],
+        'valve2' => ['label' => 'Valve 2 — Zone B / Dosing', 'icon' => 'valve', 'on_state' => 'Open',  'off_state' => 'Closed'],
     ];
 
     public function index(Request $request)
@@ -38,7 +40,11 @@ class ControlController extends Controller
                 ->latest('id')
                 ->first();
 
-            $isOn = $latest && $latest->command === 'on';
+            // A command still 'pending' was never actually delivered (device
+            // offline, push failed, hasn't polled yet) — don't show the relay
+            // as on until the device has actually received it.
+            $isPending = $latest && $latest->command === 'on' && $latest->status === 'pending';
+            $isOn = $latest && $latest->command === 'on' && $latest->status !== 'pending';
             if ($isOn) {
                 $activeCount++;
             }
@@ -46,6 +52,7 @@ class ControlController extends Controller
             $actuators[] = array_merge($meta, [
                 'key' => $key,
                 'is_on' => $isOn,
+                'is_pending' => $isPending,
                 'latest' => $latest,
             ]);
         }
@@ -62,7 +69,7 @@ class ControlController extends Controller
         }
         unset($rule);
         // Fertigation is schedule-driven (managed on the Schedules page), no engine key.
-        $rules[] = ['key' => null, 'name' => 'Fertigation', 'condition' => 'On schedule', 'action' => 'Fert Pump → ON', 'actuator' => 'fertiliser_pump', 'enabled' => true];
+        $rules[] = ['key' => null, 'name' => 'Fertigation', 'condition' => 'On schedule', 'action' => 'Valve 2 → OPEN', 'actuator' => 'valve2', 'enabled' => true];
 
         foreach ($rules as &$rule) {
             $last = ActuatorCommand::whereIn('device_id', $deviceIds)
@@ -79,7 +86,7 @@ class ControlController extends Controller
     public function toggle(Request $request, CommandIssuer $issuer)
     {
         $data = $request->validate([
-            'actuator' => ['required', 'in:pump,fan,valve1,valve2,fertiliser_pump'],
+            'actuator' => ['required', 'in:pump,fan,valve1,valve2'],
             'command' => ['required', 'in:on,off'],
             'duration' => ['nullable', 'integer', 'min:1'],
             'greenhouse' => ['nullable', 'exists:greenhouses,id'],

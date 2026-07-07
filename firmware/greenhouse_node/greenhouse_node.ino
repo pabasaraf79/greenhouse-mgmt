@@ -43,16 +43,18 @@
 #endif
 
 // ----------------------------------------------------------------------------
-// CONFIG — edit for your site
+// CONFIG — these 4 values are filled in automatically when you download this
+// file from Devices > Register (or Devices > Edit > Download Firmware) in the
+// web app. Editing them by hand also works if you're not using that flow.
 // ----------------------------------------------------------------------------
-const char* WIFI_SSID = "SLT_FIBER_zaxz2";
-const char* WIFI_PASS = "4S2ZPyRu";
+const char* WIFI_SSID = "__WIFI_SSID__";
+const char* WIFI_PASS = "__WIFI_PASS__";
 
-// PC running `php artisan serve --host=0.0.0.0 --port=8000`. Use its LAN IP.
-const char* SERVER     = "http://192.168.1.50:8000";
+// The Laravel app's LAN address, e.g. http://192.168.1.50:8000
+const char* SERVER     = "__SERVER__";
 
 // Must equal this device's api_key in the Laravel DB (Devices page).
-const char* DEVICE_KEY = "gh01-secret-key-0001";
+const char* DEVICE_KEY = "__DEVICE_KEY__";
 
 const unsigned long SENSOR_INTERVAL_MS = 30000;  // push readings every 30 s
 const unsigned long POLL_INTERVAL_MS   = 5000;   // poll for commands every 5 s
@@ -249,7 +251,7 @@ void setup() {
   Serial.print("WiFi");
   while (WiFi.status() != WL_CONNECTED) { delay(400); Serial.print("."); }
 #endif
-  Serial.printf("\nIP: %s  <-- put this in Devices > Edit > IP Address\n", WiFi.localIP().toString().c_str());
+  Serial.printf("\nIP: %s  (the app picks this up automatically on the first sensor post/poll)\n", WiFi.localIP().toString().c_str());
 
   const char* hdr[] = { "X-Device-Key" };
   server.collectHeaders(hdr, 1);

@@ -46,6 +46,24 @@
                     </button>
                 </form>
             </div>
+
+            <div class="gh-card mt-3">
+                <div class="section-title mb-2">Firmware</div>
+                @if ($device->wifi_ssid && $device->wifi_password && $device->server_url)
+                    <p class="text-muted-2 small mb-3">
+                        Ready-to-flash <code>.ino</code> for this device: WiFi
+                        "{{ $device->wifi_ssid }}", server {{ $device->server_url }}.
+                    </p>
+                    <a href="{{ route('devices.firmware', $device) }}" class="btn btn-accent btn-sm">
+                        @include('partials.icon', ['name' => 'download', 'size' => 14]) Download Firmware
+                    </a>
+                @else
+                    <p class="text-muted-2 small mb-3">
+                        Set WiFi SSID, WiFi Password, and Server Address in
+                        <a href="{{ route('devices.edit', $device) }}">Edit</a> to enable firmware download.
+                    </p>
+                @endif
+            </div>
         </div>
 
         <div class="col-12 col-lg-7">

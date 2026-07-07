@@ -14,7 +14,9 @@ class DeviceApiKeyMiddleware
      *
      * On success the authenticated Device is bound onto the request
      * (retrieve it with $request->attributes->get('device')) and the
-     * device is marked online with a fresh last_seen_at timestamp.
+     * device is marked online with a fresh last_seen_at timestamp and its
+     * current source IP — this is what keeps ip_address accurate across
+     * DHCP lease renewals without any manual re-entry.
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
@@ -31,6 +33,7 @@ class DeviceApiKeyMiddleware
         $device->forceFill([
             'status' => 'online',
             'last_seen_at' => now(),
+            'ip_address' => $request->ip(),
         ])->save();
 
         $request->attributes->set('device', $device);

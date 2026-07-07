@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Device;
 use App\Models\Greenhouse;
+use App\Services\FirmwareGenerator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -16,11 +17,12 @@ class DeviceController extends Controller
         return view('devices.index', compact('devices'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $greenhouses = Greenhouse::orderBy('name')->get();
+        $defaultServer = $request->getSchemeAndHttpHost();
 
-        return view('devices.create', compact('greenhouses'));
+        return view('devices.create', compact('greenhouses', 'defaultServer'));
     }
 
     public function store(Request $request)
@@ -29,8 +31,10 @@ class DeviceController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'greenhouse_id' => ['required', 'exists:greenhouses,id'],
             'identifier' => ['required', 'string', 'max:255'],
-            'ip_address' => ['nullable', 'string', 'max:45'],
             'firmware_version' => ['nullable', 'string', 'max:50'],
+            'wifi_ssid' => ['nullable', 'string', 'max:255'],
+            'wifi_password' => ['nullable', 'string', 'max:255'],
+            'server_url' => ['nullable', 'string', 'max:255'],
         ]);
 
         $data['api_key'] = Str::random(32);
@@ -52,11 +56,12 @@ class DeviceController extends Controller
         return view('devices.show', compact('device', 'readings', 'commands'));
     }
 
-    public function edit(Device $device)
+    public function edit(Request $request, Device $device)
     {
         $greenhouses = Greenhouse::orderBy('name')->get();
+        $defaultServer = $request->getSchemeAndHttpHost();
 
-        return view('devices.edit', compact('device', 'greenhouses'));
+        return view('devices.edit', compact('device', 'greenhouses', 'defaultServer'));
     }
 
     public function update(Request $request, Device $device)
@@ -68,6 +73,9 @@ class DeviceController extends Controller
             'ip_address' => ['nullable', 'string', 'max:45'],
             'firmware_version' => ['nullable', 'string', 'max:50'],
             'status' => ['nullable', 'in:online,offline,unknown'],
+            'wifi_ssid' => ['nullable', 'string', 'max:255'],
+            'wifi_password' => ['nullable', 'string', 'max:255'],
+            'server_url' => ['nullable', 'string', 'max:255'],
         ]);
 
         $device->update($data);
@@ -91,5 +99,21 @@ class DeviceController extends Controller
         return redirect()->route('devices.show', $device)
             ->with('status', 'API key regenerated.')
             ->with('new_api_key', $device->api_key);
+    }
+
+    public function downloadFirmware(Device $device, FirmwareGenerator $generator)
+    {
+        if (! $device->wifi_ssid || ! $device->wifi_password || ! $device->server_url) {
+            return redirect()->route('devices.edit', $device)
+                ->with('status', 'Set WiFi SSID, WiFi Password, and Server Address before downloading firmware.');
+        }
+
+        $filename = 'greenhouse_node_'.Str::slug($device->identifier).'.ino';
+
+        return response()->streamDownload(
+            fn () => print($generator->generate($device)),
+            $filename,
+            ['Content-Type' => 'text/x-c++src']
+        );
     }
 }
