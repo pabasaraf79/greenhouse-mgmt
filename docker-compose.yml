@@ -4,7 +4,9 @@ services:
         image: greenhouse-mgmt-app
         restart: unless-stopped
         ports:
-            - "8080:80"
+            # 8000 to match the ESP32 firmware's hardcoded SERVER port
+            # (firmware/greenhouse_node/greenhouse_node.ino) — no reflash needed.
+            - "8000:80"
         environment:
             # Container networking — always these values regardless of .env,
             # since the host's own MySQL (if any) uses different credentials.

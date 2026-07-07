@@ -164,8 +164,10 @@ cp .env.example .env             # first time only
 docker compose up -d --build     # builds the app image, starts app + db + scheduler
 ```
 
-- App: **http://localhost:8080** (also reachable from other LAN devices, incl. ESP32
-  nodes, at `http://<this-machine's-LAN-IP>:8080`).
+- App: **http://localhost:8000** (also reachable from other LAN devices, incl. ESP32
+  nodes, at `http://<this-machine's-LAN-IP>:8000` — same port ESP32 firmware already
+  expects (2.1/2.2), so no firmware change is needed as long as the container host has
+  the LAN IP the firmware is flashed with).
 - Three containers: `app` (Apache+PHP, runs migrations on boot), `db` (MySQL 8.4),
   `scheduler` (runs `php artisan schedule:work` — this **replaces** the manual
   scheduler step from 1.6; fertigation schedules fire automatically).
