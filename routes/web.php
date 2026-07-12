@@ -9,6 +9,8 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\ThresholdController;
+use App\Http\Controllers\CropActivityRecordController;
+use App\Http\Controllers\AgriculturalInputController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -62,6 +64,11 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
     Route::post('/reports/export/pdf', [ReportController::class, 'exportPdf'])->name('reports.export.pdf');
     Route::post('/reports/export/csv', [ReportController::class, 'exportCsv'])->name('reports.export.csv');
+
+    Route::post('/crop-activities', [CropActivityRecordController::class, 'store'])->name('crop-activities.store');
+    Route::patch('/crop-activities/{cropActivityRecord}', [CropActivityRecordController::class, 'update'])->name('crop-activities.update');
+    Route::post('/agricultural-inputs', [AgriculturalInputController::class, 'store'])->name('agricultural-inputs.store');
+    Route::patch('/agricultural-inputs/{agriculturalInput}', [AgriculturalInputController::class, 'update'])->name('agricultural-inputs.update');
 });
 
 require __DIR__.'/auth.php';

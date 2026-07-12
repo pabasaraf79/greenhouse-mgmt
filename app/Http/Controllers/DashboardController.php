@@ -7,6 +7,8 @@ use App\Models\Greenhouse;
 use App\Models\SensorReading;
 use App\Models\Threshold;
 use App\Support\ThresholdEvaluator;
+use App\Models\CropActivityRecord;
+use App\Models\AgriculturalInput;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
@@ -78,8 +80,12 @@ class DashboardController extends Controller
         $criticalCount = (clone $alertQuery)->where('severity', 'critical')
             ->where('status', 'active')->count();
 
+        $cropActivities = CropActivityRecord::orderBy('date', 'desc')->get();
+        $agriculturalInputs = AgriculturalInput::orderBy('purchase_date', 'desc')->get();
+
         return view('dashboard', compact(
-            'currentGreenhouse', 'latestReading', 'metrics', 'chartData', 'recentAlerts', 'criticalCount'
+            'currentGreenhouse', 'latestReading', 'metrics', 'chartData', 'recentAlerts', 'criticalCount',
+            'cropActivities', 'agriculturalInputs'
         ));
     }
 }
