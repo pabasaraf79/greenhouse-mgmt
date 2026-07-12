@@ -1,8 +1,9 @@
 # Verdantia · Greenhouse OS
 
-If you just cloned this repo and cannot log in, run one of these commands to set up the database and seed the default users:
+If you just cloned this repo and cannot log in, run these commands to set up/seed the default user accounts:
 
 * **Using Docker:**
+  *(Note: Containers must be running via `docker compose up -d` first!)*
   ```bash
   docker compose exec app php artisan migrate:fresh --seed
   ```
@@ -31,11 +32,13 @@ Verdantia is a local-LAN greenhouse management system. ESP32 nodes read sensors 
    ```bash
    docker compose up -d --build
    ```
-3. Run the migrations and seed database (command also at top):
+3. Run the migrations and seed the database (containers must be running first):
    ```bash
    docker compose exec app php artisan migrate:fresh --seed
    ```
 4. Access the app at `http://localhost:8000`.
+
+> **Note:** Once the database is seeded the first time, you can just start and stop the app using `docker compose up` / `docker compose down`. The database data is saved in a persistent volume, so you do not need to re-seed.
 
 ### Local Installation (Without Docker)
 1. Copy the environment file and install PHP packages:
